@@ -19,15 +19,15 @@ do download the quarto file from github and open it with RStudio. From
 there you can easily run code chunks or the entire file. Again, there
 are a lot of resources on how to do this, but this page might be a good
 place to start:
-(https://quarto.org/docs/get-started/hello/rstudio.html)\[https://quarto.org/docs/get-started/hello/rstudio.html\].
+<https://quarto.org/docs/get-started/hello/rstudio.html>.
 
 If this is your first exposure to code, or the first in a long time, the
 initial steps can feel overwhelming. You might want to find a course
 that covers the basics of R before you get too far. One of my favorite
-beginging resources that I still refer to from time to time is (R for
-Data Science)\[https://r4ds.hadley.nz/\], which is available for free
+beginning resources that I still refer to from time to time is [R for
+Data Science](https://r4ds.hadley.nz/), which is available for free
 online or you can purchase a hard copy. Don’t be scared of the “data
-science” in the title. This is very approachable for a beginer and will
+science” in the title. This is very approachable for a beginner and will
 help you get up to speed quickly.
 
 ------------------------------------------------------------------------
@@ -39,36 +39,33 @@ help you get up to speed quickly.
 > –<cite>The Visual Display of Quantitative Information, Edward R. Tufte
 > (2006) pg. 51</cite>
 
-<div class="notes">
-
-We are going to look at technical correctness, but also at leaning out
-graphics to make them communicate the underlying data with a minimal
-amount of “chart junk.”
-
-</div>
-
-<!-- > On inspecting any one of these charts attentively, a sufficiently distinct impression will be made, to remain unimpaired for a time, and the idea which does remain will be simple and complete, at once including the duration and the amount. -->
-<!-- > -->
-<!-- > --<cite>The Commercial and Political Atlas, William Playfair (1786)</cite> -->
+OK, let’s jump into the code. The first thing that we need to do is load
+the libraries, or packages that have a lot of functions that reduce the
+amount of code that we have to write. The first one I almost always use
+is the [tidyverse](https://tidyverse.org) that includes a lot of
+functions for data wrangling and processing, but most importantly for us
+it will load the [ggplot2](https://ggplot2.tidyverse.org) package which
+is what we will use to generate all of the charts. We are also loading
+the [readxl](https://readxl.tidyverse.org/) package for reading in some
+data from Excel files, the [scales](https://scales.r-lib.org/) package
+for manipulating the labels on the graph scales, and the
+[colorBlindness](https://cran.r-project.org/package=colorBlindness)
+package for showing what charts look like to people who have some sort
+of colorblindness.
 
 ``` r
 library(tidyverse)
 library(readxl)
-library(ggthemes)
 library(scales)
 library(colorBlindness)
-
-# wcqi_template <- officer::read_pptx(
-#   "wcqi_2025_template.pptx"
-#   )
-# 
-# add_content_slide <- function(content, title) {
-#   wcqi_template |>
-#     add_slide(layout = "blue_title_and_content", master = "Office Theme 2013 - 2022") |>
-#     ph_with(title, location = ph_location_label("Title 1")) |>
-#     ph_with(content, location = ph_location_label("Text Placeholder 23"))
-# }
+library(patchwork)
 ```
+
+Next, we need to load the data into R. For the first example, we will do
+that by reading the price of white flour from an excel file. There are
+ways to read this directly from the [bls.org](https://bls.org) website,
+but for this demonstration I found it was easier to just download the
+data and read it.
 
 ``` r
 white_flour_cost <- read_excel("SeriesReport-20250218224807_b50c0a.xlsx", 
@@ -80,7 +77,16 @@ white_flour_cost <- read_excel("SeriesReport-20250218224807_b50c0a.xlsx",
   summarise(dollars = mean(dollars)) |>
   ungroup() |>
   mutate(Year = ymd(paste(Year, "-01-01")))
+```
 
+Because I wanted to make a few different examples of this plot, I went
+ahead and make a `plot_flour_cost()` function that I could use to
+generate the different variations of the plot. This function takes the
+data that we read in the chunk above and optionally the limits that we
+want for the y-axis and the plot ratio. Then I call it four times to get
+the different variations of the plot.
+
+``` r
 plot_flour_cost <- function(data, limits = c(NA, NA), ratio = NA) {
   p <- data |>
     ggplot(aes(x = Year, y = dollars)) +
@@ -92,7 +98,6 @@ plot_flour_cost <- function(data, limits = c(NA, NA), ratio = NA) {
                         limits = limits) +
     theme_minimal() +
     theme(axis.title.x = element_blank(),
-          text = element_text(size = 24),
           plot.title.position = "plot",
           plot.caption.position = "plot")
   
@@ -108,44 +113,34 @@ flat_flour_cost <- plot_flour_cost(white_flour_cost, c(0, 10))
 flat_flour_cost
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/series_examples-1.png)
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/flour_plot-1.png)
 
 ``` r
-# add_content_slide(flat_flour_cost, "Axis Zoom")
-
-# plot_flour_cost(white_flour_cost, ratio = 1e3, limits = c(NA, 10))
-
 steep_flour_cost <- plot_flour_cost(white_flour_cost, ratio = 5e4) +
   theme(plot.title = element_text(hjust = .5))
 
 steep_flour_cost
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/series_examples-2.png)
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/flour_plot-2.png)
 
 ``` r
-# add_content_slide(steep_flour_cost, "Axis Zoom")
-
 default_limits_flour_cost <- plot_flour_cost(white_flour_cost, limits = c(NA, NA))
 
 default_limits_flour_cost
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/series_examples-3.png)
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/flour_plot-3.png)
 
 ``` r
-# add_content_slide(default_limits_flour_cost, "Axis Zoom")
-
 include_zero_flour_cost <- plot_flour_cost(white_flour_cost, limits = c(0, .6))
 
 include_zero_flour_cost
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/series_examples-4.png)
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/flour_plot-4.png)
 
-``` r
-# add_content_slide(include_zero_flour_cost, "Axis Zoom")
-```
+Next we will look at the plots that had way too many colors and lines.
 
 ``` r
 cpi_series <- read_delim("ap.series.txt",
@@ -161,14 +156,8 @@ full_cpi <- read_delim(
 ) |>
   left_join(cpi_series, by = "series_id") |>
   filter(area_code == "0000") |>
-  #group_by(year, series_title) |>
-  #summarise(cpi = mean(value),
-  #          n = n()) |>
-  #ungroup() |>
-  mutate(#cpi = cpi - 1, 
-         year = ymd(paste(year, "-", str_extract(period, "\\d{2}"), "-01")),
-         cost = as.numeric(value)) #|>
-  #filter(n == 12)
+  mutate(year = ymd(paste(year, "-", str_extract(period, "\\d{2}"), "-01")),
+         cost = as.numeric(value))
   
 
 too_many_color <- full_cpi |>
@@ -181,7 +170,6 @@ too_many_color <- full_cpi |>
   theme_minimal() +
   theme(legend.position = "none",
         axis.title = element_blank(),
-        text = element_text(size = 24),
         plot.title.position = "plot",
         plot.caption.position = "plot")
 
@@ -190,9 +178,10 @@ too_many_color
 
 ![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/many_groups-1.png)
 
-``` r
-# add_content_slide(too_many_color, "Legends and Colors")
+In the next section we will change the y axis to a log scale to make the
+data more visible.
 
+``` r
 too_many_color_log <- full_cpi |>
   ggplot(aes(x = year, y = cost, color = series_title, group = series_title)) +
   geom_line() +
@@ -203,29 +192,29 @@ too_many_color_log <- full_cpi |>
   theme_minimal() +
   theme(legend.position = "none",
         axis.title = element_blank(),
-        text = element_text(size = 24),
         plot.title.position = "plot",
         plot.caption.position = "plot")
 
 too_many_color_log
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/many_groups-2.png)
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/unnamed-chunk-5-1.png)
 
-``` r
-# add_content_slide(too_many_color_log, "Legends and Colors")
+Take care that you don’t misinterpret the log scale, though. Look at
+what the values half-way between the labeled marks mean:
 
-too_many_color_log_extra_breaks <- too_many_color_log +
+``` too_many_color_log_extra_breaks
   scale_y_log10(labels = label_dollar(), n.breaks = 7)
 
 too_many_color_log_extra_breaks
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/many_groups-3.png)
+Next, let’s label some interesting lines to make the data more
+meaningful. I chose some lines that seemed interesting, and gave them
+colors. The rest are a transparent black (i.e. gray) so that you can see
+the trend, but don’t get lost in what each individual line means.
 
 ``` r
-# add_content_slide(too_many_color_log_extra_breaks, "Legends and Colors")
-
 selected_series <- c(
   "Utility (piped) gas - 100 therms",
   "Electricity per 500 KWH",
@@ -242,17 +231,14 @@ color_scale <-  c(colorBlindness::PairedColor12Steps[2],
                   colorBlindness::PairedColor12Steps[10],
                   "gray15")
 names(color_scale) <- selected_series
-# "#FFBF7F" "#FF7F00" "#FFFF99" "#FFFF32" "#B2FF8C" "#32FF00" "#A5EDFF" "#19B2FF" "#CCBFFF" "#654CFF" "#FF99BF" "#E51932"
 
 better_colors <- full_cpi |>
-  #group_by(series_id) |>
   nest(data = -series_id) |>
   mutate(mean = map_dbl(data, ~ mean(.x$cost, na.rm = TRUE))) |>
   arrange(desc(mean)) |>
   mutate(row = row_number()) |>
   unnest(data) |>
   ungroup() |>
-  # mutate(max_row = max(row))
   mutate(label = case_when(row < 4 ~ series_title,
                            row == 6 ~ series_title,
                            (row / max(row)) == 1 ~ series_title,
@@ -287,48 +273,44 @@ better_colors <- full_cpi |>
         legend.byrow = TRUE,
         legend.title = element_blank(),
         axis.title = element_blank(),
-        text = element_text(size = 24),
         plot.title.position = "plot",
         plot.caption.position = "plot")
 
 better_colors
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/many_groups-4.png)
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/unnamed-chunk-6-1.png)
+
+The legend is still challenging, however. You have to go back and forth
+with your eye to identify the colors. We can improve that by labeling
+the lines directly on the face of the graph.
 
 ``` r
-# add_content_slide(better_colors, "Legends and Colors")
-
 better_labels <- better_colors +
-  # geom_text(aes(label = "series_title")) +
   geomtextpath::geom_textline(aes(y = path_cost, 
                                   label = path_label,
-                                  vjust = path_vjust_log,
-                                  #hjust = path_hjust
-                                  ), 
+                                  vjust = path_vjust_log), 
                               text_smoothing = 50) +
   theme(legend.position = "none",
-        text = element_text(size = 24),
         plot.title.position = "plot",
         plot.caption.position = "plot")
 
 better_labels
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/many_groups-5.png)
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/unnamed-chunk-7-1.png)
+
+And, here is that same graph moved back to a linear scale. Except for
+the bottom line, this is a clearer, more intuitive chart.
 
 ``` r
-# add_content_slide(better_labels, "Legends and colors")
-
 better_labels_no_log <- better_colors +
-  # geom_text(aes(label = "series_title")) +
   geomtextpath::geom_textline(aes(y = path_cost, 
                                   label = path_label,
                                   vjust = path_vjust,
                                   hjust = path_hjust), 
                               text_smoothing = 64) +
   theme(legend.position = "none",
-        text = element_text(size = 24),
         plot.title.position = "plot",
         plot.caption.position = "plot") +
   scale_y_continuous(labels = label_dollar())
@@ -336,16 +318,17 @@ better_labels_no_log <- better_colors +
 better_labels_no_log
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/many_groups-6.png)
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/unnamed-chunk-8-1.png)
 
-``` r
-# add_content_slide(better_labels_no_log, "Legends and Colors") 
-```
+In this next section we look at a dual-axis chart. It is very unclear
+for someone who is colorblind, and there are a lot of drawbacks to the
+dual-axis nature that we will review in a later section. We have to
+scale the data to torture `ggplot2` into making a dual-axis chart like
+this.
 
 ``` r
 theme_set(theme_minimal())
 theme_update(legend.title = element_blank(),
-             text = element_text(size = 24),
              plot.title.position = "plot",
              plot.caption.position = "plot")
 
@@ -356,8 +339,6 @@ aubrey_exxon <- tibble(babies = c(1813, 1894, 1961, 2412, 3802, 4644, 5703, 5551
 fit_lm <- lm(babies ~ exxon_stock, data = aubrey_exxon)
 reverse_fit_lm <- lm(exxon_stock ~ babies, data = aubrey_exxon)
 
-# Excel Celestial palette #AC3EC1FF, #477BD1FF, #46B298FF, #90BA4CFF, #DD9D31FF, #E25247FF
-
 aubrey_exxon_time_series <- aubrey_exxon |>
   mutate(exxon_stock = exxon_stock * fit_lm$coefficients[2] * 1 + fit_lm$coefficients[1]) |>
   rename("Exxon Stock" = "exxon_stock", "Babies Born" = "babies") |>
@@ -365,7 +346,6 @@ aubrey_exxon_time_series <- aubrey_exxon |>
   ggplot(aes(x = year, y = value, color = name)) +
   geom_line() +
   geom_point() +
-  # scale_y_continuous(sec.axis = sec_axis(~ . * .01025 + 16.55, labels = scales::dollar)) +
   scale_y_continuous(sec.axis = sec_axis(
     ~ . * 
       reverse_fit_lm$coefficients[2] * 1 + 
@@ -383,24 +363,16 @@ aubrey_exxon_time_series
 
 ![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/first_example-1.png)
 
-``` r
-# add_content_slide(aubrey_exxon_time_series, "Accessible Colors") 
-```
+Here you can see what that chart looks like to people with different
+forms of colorblindness.
 
 ``` r
 theme_set(theme_void())
 theme_update(legend.position = "none",
              title = element_blank(),
              caption = element_blank(),
-             text = element_text(size = 24),
              plot.title.position = "plot",
              plot.caption.position = "plot")
-
-# colorBlindness::cvdPlot(aubrey_exxon_time_series + 
-#                           theme_void() + 
-#                           theme(legend.position = "none",
-#                                 title = element_blank())
-#                         )
 
 cb_grid <- colorblindr::cvd_grid(aubrey_exxon_time_series)
 
@@ -409,34 +381,38 @@ cb_grid
 
 ![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/color_blind-1.png)
 
-``` r
-# add_content_slide(cb_grid, "Accessible Colors")
+Just for fun, this chart shows red, green, and blue density
+distributions so that we can see what they might look like to someone
+who is colorblind.
 
-cb_density <- ggplot(iris, aes(Sepal.Length, fill = Species)) + 
+``` r
+density <- ggplot(iris, aes(Sepal.Length, fill = Species)) +
   geom_density(alpha = 0.7)
+
+density
+```
+
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/unnamed-chunk-11-1.png)
+
+And here we can see that chart as it might appear to the colorblind.
+
+``` r
+cb_density <- colorblindr::cvd_grid(density)
 
 cb_density
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/color_blind-2.png)
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/unnamed-chunk-12-1.png)
 
-``` r
-# add_content_slide(cb_density, "Accessible Colors")
-
-# cb_density_grid <- colorblindr::cvd_grid(fig)
-# 
-# cb_density_grid
-
-# add_content_slide(cb_density_grid, "Accessible Colors")
-```
+Let’s go back to our dual-axis chart and torture it some more. What does
+it look like when we use different scales scales for either y axis? The
+story is very different than the first plot, and misleading in both.
 
 ``` r
 theme_set(theme_minimal())
 theme_update(legend.title = element_blank(),
-             text = element_text(size = 24),
              plot.title.position = "plot",
              plot.caption.position = "plot")
-#theme(axis.title.y.left = )
 
 trick_sec_axis <- function(data, multiple, intercept, title) {
   data |>
@@ -446,7 +422,6 @@ trick_sec_axis <- function(data, multiple, intercept, title) {
   ggplot(aes(x = year, y = value, color = name)) +
   geom_line() +
   geom_point() +
-  # scale_y_continuous(sec.axis = sec_axis(~ . * .01025 + 16.55, labels = scales::dollar)) +
   scale_y_continuous(sec.axis = sec_axis(
     ~ ((. - intercept)/multiple), 
     labels = scales::label_dollar(),
@@ -470,8 +445,6 @@ dual_one
 ![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/dual-axis-1.png)
 
 ``` r
-# add_content_slide(dual_one, "Dual-axis Pitfalls")
-
 dual_two <- trick_sec_axis(data = aubrey_exxon, multiple = 2500, intercept = -100000, "Exxon Stock Volatile while Babes Named Audrey Unchanged")
 
 dual_two
@@ -479,9 +452,9 @@ dual_two
 
 ![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/dual-axis-2.png)
 
-``` r
-# add_content_slide(dual_two, "Dual-axis Pitfalls") 
-```
+A much better way to blot this is with a scatter plot. I don’t love the
+continuous scale for the years, but it is technically better for the
+colorblind.
 
 ``` r
 scatter_example <- aubrey_exxon |>
@@ -500,13 +473,51 @@ scatter_example
 
 ![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/scatter_plot-1.png)
 
-``` r
-# add_content_slide(scatter_example, "Dual-axis Pitfalls")
-```
+If it is really important to show the change over time, I suggest using
+three different plots like this:
 
 ``` r
-# theme_update(axis.title.y.left = element_text(angle = 0, vjust = .5),
-#              axis.title.y.right = element_text(angle = 0, vjust = .5))
+gg_exxon <- aubrey_exxon |>
+  ggplot(aes(x = year, y = exxon_stock)) +
+  geom_point() +
+  geom_line() +
+  xlab("Year") +
+  ylab("Exxon Stock") +
+  scale_y_continuous(labels = scales::label_dollar())
+
+gg_aubrey <- aubrey_exxon |>
+  ggplot(aes(x = year, y = babies)) +
+  geom_point() +
+  geom_line() +
+  xlab("Year") +
+  ylab("Babies") 
+
+gg_aubrey_exxon_comparison <- aubrey_exxon |>
+  ggplot(aes(x = babies, y = exxon_stock)) +
+  geom_point() +
+  scale_y_continuous(labels = scales::label_dollar()) +
+  xlab("Babies") +
+  ylab("Exxon Stock")
+
+combined_plot <- ((gg_aubrey + 
+                     gg_exxon + 
+                     plot_layout(ncol = 1,
+                                 axes = "collect")) |  
+                    gg_aubrey_exxon_comparison) + 
+  patchwork::plot_annotation("Comparison of Babies Named \"Audrey\" with Exxon Stock Price")
+
+combined_plot
+```
+
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/split_dual-1.png)
+
+OK, the last think that I want to look at is chart junk. Here we have a
+chart with way too many colors that do not add any value. If you want
+the gray background outside of the plot area that I presented at the
+conference, you can un-comment (delete the “\#” symbol) on the
+`theme_igray() +` line.
+
+``` r
 theme_update(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5),
              legend.position = "right")
 
@@ -552,26 +563,23 @@ pareto <- certifications |>
                                          labels = scales::label_percent(),
                                          name = "Percent")) +
   guides(fill = guide_legend(ncol = 2)) +
+  # theme_igray() +
   theme(legend.title = element_blank(),
-        text = element_text(size = 24),
         plot.title.position = "plot",
         plot.caption.position = "plot")
-  #scale_x_discrete(guide = guide_axis(n.dodge = 2))
 
 pareto
 ```
 
 ![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/theme_update-1.png)
 
-``` r
-# add_content_slide(pareto, "Accessible Colors")
-```
+And just for fun, here is that same plot using the familiar colorblind
+grid.
 
 ``` r
 cb_pareto <- colorblindr::cvd_grid(pareto +
                         theme_void() +
                         theme(legend.position = "none",
-                              text = element_text(size = 24),
                               plot.title = element_blank(),
                               plot.caption = element_blank()))
 
@@ -580,16 +588,11 @@ cb_pareto
 
 ![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/colorblind_pareto-1.png)
 
-``` r
-# add_content_slide(cb_pareto, "Accessible Colors")
-```
-
-## Dump the chart junk
+Let’s clean that up a bit.
 
 ``` r
 theme_set(theme_minimal())
 theme_update(legend.position = "none",
-             text = element_text(size = 24),
              axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5),
              plot.title.position = "plot",
              plot.caption.position = "plot")
@@ -607,18 +610,16 @@ clean_pareto_step_one <- certifications |>
                      sec.axis = sec_axis(transform = ~ ./max_roll_sum,
                                          labels = scales::label_percent(),
                                          name = "Percent"))
-  #scale_x_discrete(guide = guide_axis(n.dodge = 2))
 
 clean_pareto_step_one
 ```
 
 ![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/chart_junk-1.png)
 
-``` r
-# add_content_slide(clean_pareto_step_one, "Chart Junk")
+And we’ll clean it some more:
 
+``` r
 theme_update(axis.title.y.left = element_text(angle = 0, vjust = .5, hjust = .5),
-             #axis.text.x = element_text(angle = 0, vjust = .5, hjust = .5)
              axis.title.x = element_blank(),
              plot.title.position = "plot",
              plot.caption.position = "plot",
@@ -646,8 +647,4 @@ clean_pareto_step_two <- certifications |>
 clean_pareto_step_two
 ```
 
-![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/chart_junk-2.png)
-
-``` r
-# add_content_slide(clean_pareto_step_two, "Chart Junk")
-```
+![](wcqi-2025-charts-worth-1000-words_files/figure-commonmark/unnamed-chunk-19-1.png)
